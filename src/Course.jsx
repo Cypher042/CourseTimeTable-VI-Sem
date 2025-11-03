@@ -137,6 +137,41 @@ const CourseTimetable = () => {
     );
   };
 
+  // Add clash detection function
+  const detectClashes = () => {
+    const clashes = [];
+    const timeSlotMap = {};
+
+    selectedCourses.forEach(course => {
+      course.sessions.forEach(session => {
+        const key = `${session.day}-${session.time}`;
+        if (!timeSlotMap[key]) {
+          timeSlotMap[key] = [];
+        }
+        timeSlotMap[key].push({
+          course: course.code,
+          name: course.name,
+          venue: session.venue
+        });
+      });
+    });
+
+    Object.entries(timeSlotMap).forEach(([timeSlot, courses]) => {
+      if (courses.length > 1) {
+        const [day, time] = timeSlot.split('-');
+        clashes.push({
+          day,
+          time,
+          courses
+        });
+      }
+    });
+
+    return clashes;
+  };
+
+  const clashes = detectClashes();
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="w-full mx-auto pl-4 pr-0 py-8 lg:pl-8">
@@ -284,11 +319,21 @@ const CourseTimetable = () => {
                                   const session = course.sessions.find(s => 
                                     s.day === day && s.time.split('-')[0] === time
                                   );
+                                  const hasClash = coursesInSlot.length > 1;
                                   return session ? (
                                     <div
                                       key={course.id}
-                                      className="bg-indigo-500 text-white p-3 rounded-lg mb-2 text-xs relative hover:bg-indigo-600 transition-colors"
+                                      className={`${
+                                        hasClash 
+                                          ? 'bg-red-500 border-2 border-red-700' 
+                                          : 'bg-indigo-500'
+                                      } text-white p-3 rounded-lg mb-2 text-xs relative hover:opacity-90 transition-opacity`}
                                     >
+                                      {hasClash && (
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                                          <span className="text-red-800 text-xs font-bold">!</span>
+                                        </div>
+                                      )}
                                       <div className="font-semibold text-sm">{course.code}</div>
                                       <div className="text-xs opacity-90 truncate">{course.name}</div>
                                       <div className="flex items-center gap-1 mt-2 opacity-90 text-xs">
@@ -314,6 +359,34 @@ const CourseTimetable = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Clash Warnings */}
+              {clashes.length > 0 && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">!</span>
+                    </div>
+                    <h3 className="font-semibold text-red-800">Schedule Conflicts Detected</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {clashes.map((clash, index) => (
+                      <div key={index} className="text-sm">
+                        <div className="font-medium text-red-700">
+                          {clash.day} at {clash.time}:
+                        </div>
+                        <ul className="ml-4 text-red-600">
+                          {clash.courses.map((course, courseIndex) => (
+                            <li key={courseIndex}>
+                              • {course.course} - {course.name} ({course.venue})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
