@@ -13,60 +13,86 @@ const CourseTimetable = () => {
 
   // Parse the CSV data
   useEffect(() => {
-    const csvData = courseData
-    const lines = csvData.trim().split('\n').slice(1);
-    const parsedCourses = lines.map(line => {
-      // Better CSV parsing to handle quoted fields
-      const parts = [];
-      let current = '';
-      let inQuotes = false;
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          parts.push(current.trim());
-          current = '';
-        } else {
-          current += char;
+    const lines = courseData.trim().split('\n').slice(1); // Skip header
+
+    const parsedCourses = lines
+      .map((line) => {
+        // Split by comma but handle quoted fields
+        const parts = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            parts.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
         }
-      }
-      parts.push(current.trim());
-      
-      if (parts.length < 8) return null;
-      
-      const [slNo, course, instructor, dept, program, branch, ltp, timeTable] = parts;
-      
-      const sessions = [];
-      const timeTableClean = timeTable.replace(/"/g, '');
-      const sessionMatches = timeTableClean.matchAll(/(\w+)\s+(\d{2}:\d{2}-\d{2}:\d{2})\s+([\w\-\/]+(?:\s+[\w]+)?)/g);
-      
-      for (const sessionMatch of sessionMatches) {
-        sessions.push({
-          day: sessionMatch[1],
-          time: sessionMatch[2],
-          venue: sessionMatch[3]
-        });
-      }
-      
-      const courseCodeMatch = course.match(/^([^\(]+)/);
-      const courseNameMatch = course.match(/\((.*?)\)/);
-      
-      return {
-        id: slNo,
-        code: courseCodeMatch ? courseCodeMatch[1].trim() : course,
-        name: courseNameMatch ? courseNameMatch[1] : course,
-        fullName: course,
-        instructor: instructor.trim(),
-        department: dept.trim(),
-        program: program.trim(),
-        branch: branch.split('/')[0],
-        semester: branch.split('/')[1] || '',
-        credits: ltp,
-        sessions
-      };
-    }).filter(Boolean);
+        parts.push(current.trim());
+
+        if (parts.length < 7) return null;
+
+        const [
+          slNo, course, instructor, dept, program, branch, ltp,
+          slot1Day, slot1Time, slot1Venue,
+          slot2Day, slot2Time, slot2Venue,
+          slot3Day, slot3Time, slot3Venue
+        ] = parts;
+
+        // Parse sessions from the structured slots
+        const sessions = [];
+        
+        // Add slot 1 if it has day and time
+        if (slot1Day && slot1Time) {
+          sessions.push({
+            day: slot1Day.trim(),
+            time: slot1Time.trim(),
+            venue: slot1Venue ? slot1Venue.trim() : 'TBA'
+          });
+        }
+        
+        // Add slot 2 if it has day and time
+        if (slot2Day && slot2Time) {
+          sessions.push({
+            day: slot2Day.trim(),
+            time: slot2Time.trim(),
+            venue: slot2Venue ? slot2Venue.trim() : 'TBA'
+          });
+        }
+        
+        // Add slot 3 if it has day and time
+        if (slot3Day && slot3Time) {
+          sessions.push({
+            day: slot3Day.trim(),
+            time: slot3Time.trim(),
+            venue: slot3Venue ? slot3Venue.trim() : 'TBA'
+          });
+        }
+
+        // Extract course code and name
+        const courseCodeMatch = course.match(/^([^\(]+)/);
+        const courseNameMatch = course.match(/\((.*?)\)/);
+
+        return {
+          id: slNo,
+          code: courseCodeMatch ? courseCodeMatch[1].trim() : course,
+          name: courseNameMatch ? courseNameMatch[1] : course,
+          fullName: course,
+          instructor: instructor.trim(),
+          department: dept.trim(),
+          program: program.trim(),
+          branch: branch.split('/')[0] || branch.trim(),
+          semester: branch.split('/')[1] || '',
+          credits: ltp,
+          sessions
+        };
+      })
+      .filter(Boolean);
 
     setCourses(parsedCourses);
   }, []);
@@ -117,10 +143,10 @@ const CourseTimetable = () => {
         <header className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Calendar className="w-10 h-10 text-indigo-600" />
-              <h1 className="text-4xl font-bold text-gray-800">Course Timetable Builder</h1>
+              <Calendar className="w-8 h-8 text-indigo-600" />
+              <h6 className="text-3xl font-bold text-gray-800">Timetable Builder</h6>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 pr-4">
               {selectedCourses.length} course{selectedCourses.length !== 1 ? 's' : ''} selected
             </div>
           </div>
@@ -141,7 +167,7 @@ const CourseTimetable = () => {
                 <input
                   type="text"
                   placeholder="Search courses..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="text-black w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
