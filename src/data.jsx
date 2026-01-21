@@ -108,7 +108,7 @@ export const courseData = `Sl No,Course,Instructor name,Department,Programm,Bran
 107,ESD402(Industrial Waste Water Engineering),Sunil Kumar Gupta,ese,b.tech,env/6/,3-0-0,Monday,05:00-05:50,LC-II-G9,Thursday,04:00-04:50,LC-II-G9,Friday,05:00-05:50,LC-II-G9
 108,ESD404(Water Resource Planning and Management),Tinesh Pathania,ese,b.tech,env/6/,3-0-0,Tuesday,04:00-04:50,LC-II-G9,Thursday,05:00-05:50,LC-II-G9,Friday,04:00-04:50,LC-II-G9
 109,ESO301(Applied Statistics for Environmental Engineering),Riya Dutta,ese,b.tech,env/6/,3-0-0,Monday,04:00-04:50,LC-II-G9,Tuesday,05:00-05:50,LC-II-G9,Wednesday,05:00-05:50,LC-II-G9
-110,MSO301(Operations Research),Rashmi Singh,ese,b.tech,env/6/,3-0-0,Tuesday,04:00-04:50,NAC Hall,Thursday,05:00-05:50,NAC Hall,Friday,04:00-04:50,NAC Hall
+110,MSO301(Operations Research),Rashmi Singh,ese,b.tech,env/6/,3-0-0,Tuesday,04:00-04:50,NAC Hall,Thursday,05:00-05:50,NAC Hall,Friday,04:00-04:50,LC-G14
 111,MSO401(Principles of Economics),Mohd. Irfan,ese,b.tech,env/6/,3-0-0,Monday,05:00-05:50,NAC Hall,Thursday,04:00-04:50,NAC Hall,Friday,05:00-05:50,NAC Hall
 112,MSO402(Introduction to Financial Management),"Niladri Das,Shashank Bansal",ese,b.tech,env/6/,3-0-0,Monday,04:00-04:50,NAC Hall,Tuesday,05:00-05:50,NAC Hall,Wednesday,05:00-05:50,NAC Hall
 113,FMC303(Mechanical Metallurgy),Avanish Kumar,fme,b.tech,mlmte/6/,3-0-0,Tuesday,03:00-03:50,LC-II-C10,Wednesday,04:00-04:50,LC-II-C10,Friday,03:00-03:50,LC-II-C10
