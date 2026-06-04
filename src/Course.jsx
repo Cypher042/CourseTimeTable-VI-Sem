@@ -11,72 +11,73 @@ const CourseTimetable = () => {
     semester: 'all'
   });
 
+  const parseCsvLine = (line) => {
+    const parts = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        parts.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    parts.push(current);
+    return parts;
+  };
+
   // Parse the CSV data
   useEffect(() => {
-    const lines = courseData.trim().split('\n').slice(1); // Skip header
+    const lines = courseData.trim().split('\n');
+    const header = parseCsvLine(lines[0]);
+    const dataLines = lines.slice(1).filter(line => line.trim().length > 0);
+    const slotNumbers = [...new Set(
+      header
+        .filter(key => key.startsWith('Slot ') && key.endsWith(' Day'))
+        .map(key => Number(key.replace('Slot ', '').replace(' Day', '')))
+        .filter(Number.isFinite)
+    )].sort((a, b) => a - b);
 
-    const parsedCourses = lines
+    const parsedCourses = dataLines
       .map((line) => {
-        // Split by comma but handle quoted fields
-        const parts = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < line.length; i++) {
-          const char = line[i];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            parts.push(current.trim());
-            current = '';
-          } else {
-            current += char;
-          }
-        }
-        parts.push(current.trim());
+        const row = parseCsvLine(line);
+        if (row.length < 7) return null;
 
-        if (parts.length < 7) return null;
+        const record = header.reduce((acc, key, index) => {
+          acc[key] = row[index] ? row[index].trim() : '';
+          return acc;
+        }, {});
 
-        const [
-          slNo, course, instructor, dept, program, branch, ltp,
-          slot1Day, slot1Time, slot1Venue,
-          slot2Day, slot2Time, slot2Venue,
-          slot3Day, slot3Time, slot3Venue
-        ] = parts;
+        const course = record['Course'] || '';
+        const instructor = record['Instructor name'] || '';
+        const dept = record['Department'] || '';
+        const program = record['Programm'] || '';
+        const branchInfo = record['Branch/Semester/Section'] || '';
+        const ltp = record['Offered L-T-P'] || '';
+        const slNo = record['Sl No'] || '';
 
-        // Parse sessions from the structured slots
         const sessions = [];
-        
-        // Add slot 1 if it has day and time
-        if (slot1Day && slot1Time) {
-          sessions.push({
-            day: slot1Day.trim(),
-            time: slot1Time.trim(),
-            venue: slot1Venue ? slot1Venue.trim() : 'TBA'
-          });
-        }
-        
-        // Add slot 2 if it has day and time
-        if (slot2Day && slot2Time) {
-          sessions.push({
-            day: slot2Day.trim(),
-            time: slot2Time.trim(),
-            venue: slot2Venue ? slot2Venue.trim() : 'TBA'
-          });
-        }
-        
-        // Add slot 3 if it has day and time
-        if (slot3Day && slot3Time) {
-          sessions.push({
-            day: slot3Day.trim(),
-            time: slot3Time.trim(),
-            venue: slot3Venue ? slot3Venue.trim() : 'TBA'
-          });
-        }
+        slotNumbers.forEach((slotNumber) => {
+          const day = record[`Slot ${slotNumber} Day`];
+          const time = record[`Slot ${slotNumber} Time`];
+          const venue = record[`Slot ${slotNumber} Venue`];
+          if (day && time) {
+            sessions.push({
+              day: day.trim(),
+              time: time.trim(),
+              venue: venue ? venue.trim() : 'TBA'
+            });
+          }
+        });
 
-        // Extract course code and name
         const courseCodeMatch = course.match(/^([^\(]+)/);
         const courseNameMatch = course.match(/\((.*?)\)/);
+        const [branch, semester, section] = branchInfo.split('/').map(part => part.trim());
 
         return {
           id: slNo,
@@ -86,8 +87,9 @@ const CourseTimetable = () => {
           instructor: instructor.trim(),
           department: dept.trim(),
           program: program.trim(),
-          branch: branch.split('/')[0] || branch.trim(),
-          semester: branch.split('/')[1] || '',
+          branch: branch || branchInfo.trim(),
+          semester: semester || '',
+          section: section || '',
           credits: ltp,
           sessions
         };
@@ -97,8 +99,8 @@ const CourseTimetable = () => {
     setCourses(parsedCourses);
   }, []);
 
-  const departments = [...new Set(courses.map(c => c.department))].filter(Boolean);
-  const programs = [...new Set(courses.map(c => c.program))].filter(Boolean);
+  const departments = [...new Set(courses.map(c => c.department))].filter(Boolean).sort();
+  const programs = [...new Set(courses.map(c => c.program))].filter(Boolean).sort();
   const semesters = [...new Set(courses.map(c => c.semester))].filter(Boolean);
 
   const filteredCourses = courses.filter(course => {
@@ -222,7 +224,7 @@ const CourseTimetable = () => {
                 >
                   <option value="all">All Departments</option>
                   {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept.toUpperCase()}</option>
+                    <option key={dept} value={dept}>{dept}</option>
                   ))}
                 </select>
 
@@ -233,7 +235,7 @@ const CourseTimetable = () => {
                 >
                   <option value="all">All Programs</option>
                   {programs.map(prog => (
-                    <option key={prog} value={prog}>{prog.toUpperCase()}</option>
+                    <option key={prog} value={prog}>{prog}</option>
                   ))}
                 </select>
 
