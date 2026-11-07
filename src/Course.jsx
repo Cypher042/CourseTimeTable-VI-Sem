@@ -31,6 +31,22 @@ const CourseTimetable = () => {
     return parts;
   };
 
+  const parseTimetable = (timetable) => {
+    const sessions = [];
+    const sessionPattern = /\b(Monday|Tuesday|Wednesday|Thursday|Friday)\s+(\d{2}:\d{2}-\d{2}:\d{2})\s+([\s\S]*?)(?=\s+(?:Monday|Tuesday|Wednesday|Thursday|Friday)\s+\d{2}:\d{2}-\d{2}:\d{2}\s+|$)/g;
+    let match;
+
+    while ((match = sessionPattern.exec(timetable)) !== null) {
+      sessions.push({
+        day: match[1],
+        time: match[2],
+        venue: match[3].trim() || 'TBA'
+      });
+    }
+
+    return sessions;
+  };
+
   // Parse the CSV data
   useEffect(() => {
     const lines = courseData.trim().split('\n');
@@ -59,9 +75,11 @@ const CourseTimetable = () => {
         const program = record['Programm'] || '';
         const branchInfo = record['Branch/Semester/Section'] || '';
         const ltp = record['Offered L-T-P'] || '';
-        const slNo = record['Sl No'] || '';
+        const slNo = record['Sl No'] || record['Sl No.'] || '';
 
-        const sessions = [];
+        const sessions = record['Time Table']
+          ? parseTimetable(record['Time Table'])
+          : [];
         slotNumbers.forEach((slotNumber) => {
           const day = record[`Slot ${slotNumber} Day`];
           const time = record[`Slot ${slotNumber} Time`];
@@ -75,7 +93,7 @@ const CourseTimetable = () => {
           }
         });
 
-        const courseCodeMatch = course.match(/^([^\(]+)/);
+        const courseCodeMatch = course.match(/^([^(]+)/);
         const courseNameMatch = course.match(/\((.*?)\)/);
         const [branch, semester, section] = branchInfo.split('/').map(part => part.trim());
 
